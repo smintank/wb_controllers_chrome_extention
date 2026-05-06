@@ -1,10 +1,12 @@
 {
-  "name": "wb_controllers_chrome_extention",
-  "version": "0.1.0",
+  "name": "wb-controller-tracker-extension",
+  "version": "1.0.0",
+  "description": "Chrome extension package for tracking recently opened local Wiren Board controllers and reopening them quickly.",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run",
+    "package:extension": "node scripts/package-extension.mjs"
   },
   "devDependencies": {
     "jsdom": "^26.1.0",

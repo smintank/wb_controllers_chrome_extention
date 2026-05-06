@@ -1,0 +1,11 @@
+{
+  "extName": {
+    "message": "WB Controller Tracker"
+  },
+  "extDescription": {
+    "message": "Собирает недавно открытые локальные контроллеры Wiren Board в одном popup, чтобы можно было быстро снова открыть их web UI или SSH, пока они доступны в сети."
+  },
+  "actionTitle": {
+    "message": "Открыть WB Controller Tracker"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "extName": {
+    "message": "WB Controller Tracker"
+  },
+  "extDescription": {
+    "message": "Tracks recently opened local Wiren Board controllers in one popup so you can quickly reopen their web UI or SSH while they are still available on your network."
+  },
+  "actionTitle": {
+    "message": "Open WB Controller Tracker"
+  }
+}

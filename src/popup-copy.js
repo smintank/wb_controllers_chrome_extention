@@ -1,7 +1,7 @@
 export const popupCopy = {
   en: {
     title: "Wiren Board Local Controllers",
-    popupTitle: "Wiren Board Tracker",
+    popupTitle: "WB Controller Tracker",
     onlineOnly: "Online only",
     noDevices: "No controllers added yet. Open a controller web UI once and it will appear here.",
     delete: "Delete",
@@ -9,7 +9,7 @@ export const popupCopy = {
   },
   ru: {
     title: "Локальные контроллеры Wiren Board",
-    popupTitle: "Wiren Board Tracker",
+    popupTitle: "WB Controller Tracker",
     onlineOnly: "Только онлайн",
     noDevices: "Контроллеры ещё не добавлены. Откройте web UI контроллера один раз, и он появится здесь.",
     delete: "Удалить",

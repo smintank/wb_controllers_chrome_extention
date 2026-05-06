@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Wiren Board Tracker",
-  "version": "0.1.0",
-  "description": "Track visited local Wiren Board controllers and show their availability.",
+  "name": "__MSG_extName__",
+  "version": "1.0.0",
+  "description": "__MSG_extDescription__",
+  "default_locale": "en",
   "icons": {
     "16": "icon.png",
     "48": "icon.png",
@@ -10,6 +11,7 @@
   },
   "action": {
     "default_popup": "popup.html",
+    "default_title": "__MSG_actionTitle__",
     "default_icon": {
       "16": "icon.png",
       "48": "icon.png",
