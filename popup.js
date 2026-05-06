@@ -1,4 +1,6 @@
 
+import { extractSerialFromWirenBoardHost } from "./src/controller-discovery.js";
+import { applyDeviceStatus, refreshDeviceStatuses } from "./src/popup-status.js";
 import { renderDeviceList } from "./src/popup-view.js";
 
 const i18n = {
@@ -29,17 +31,6 @@ const label = document.getElementById("online-label");
 if (title) title.innerText = t.title;
 if (label) label.innerText = t.onlineOnly;
 
-
-function extractSerial(urlOrHostname) {
-  const localMatch = urlOrHostname.match(/wirenboard-([a-zA-Z0-9]{8})\.local/);
-  if (localMatch) return localMatch[1].toUpperCase();
-
-  const domainMatch = urlOrHostname.match(/\d+-\d+-\d+-\d+\.([a-zA-Z0-9]{8})\.ip\.wirenboard\.com/);
-  if (domainMatch) return domainMatch[1].toUpperCase();
-
-  return null;
-}
-
 function renderDevices(onlineOnly = false) {
   chrome.storage.local.get("devices", (data) => {
     const devices = data.devices || {};
@@ -47,7 +38,7 @@ function renderDevices(onlineOnly = false) {
     const renderableDevices = [];
 
     for (const [hostname, info] of entries) {
-      const serial = extractSerial(hostname);
+      const serial = extractSerialFromWirenBoardHost(hostname);
       if (!serial) continue;
 
       renderableDevices.push({
@@ -66,10 +57,19 @@ function renderDevices(onlineOnly = false) {
 
     for (const device of renderableDevices) {
       const row = list.querySelector(`[data-hostname="${CSS.escape(device.hostname)}"]`);
-
-      if (!row) continue;
-      checkOnlineStatus(device.hostname, row, onlineOnly);
+      if (row) {
+        applyDeviceStatus(row, "checking", onlineOnly);
+      }
     }
+
+    void refreshDeviceStatuses({
+      devices: renderableDevices,
+      findRowByHostname(hostname) {
+        return list.querySelector(`[data-hostname="${CSS.escape(hostname)}"]`);
+      },
+      onlineOnly,
+      checkOnline: checkOnlineStatus
+    });
   });
 }
 
@@ -81,36 +81,10 @@ function deleteDevice(hostname, onlineOnly) {
   });
 }
 
-function checkOnlineStatus(hostname, li, onlineOnly) {
-  fetch(`http://${hostname}/`, { method: "GET", mode: "no-cors" })
-    .then(() => {
-      li.classList.remove("status-checking", "status-offline");
-      li.classList.add("status-online");
-
-      const dot = li.querySelector(".status");
-      if (dot) {
-        dot.classList.remove("status-red", "status-gray");
-        dot.classList.add("status-green");
-      }
-
-      if (onlineOnly) {
-        li.style.display = "";
-      }
-    })
-    .catch(() => {
-      li.classList.remove("status-checking", "status-online");
-      li.classList.add("status-offline");
-
-      const dot = li.querySelector(".status");
-      if (dot) {
-        dot.classList.remove("status-green", "status-gray");
-        dot.classList.add("status-red");
-      }
-
-      if (onlineOnly) {
-        li.style.display = "none";
-      }
-    });
+function checkOnlineStatus(hostname) {
+  return fetch(`http://${hostname}/`, { method: "GET", mode: "no-cors" })
+    .then(() => true)
+    .catch(() => false);
 }
 
 toggle?.addEventListener("change", () => renderDevices(toggle.checked));
