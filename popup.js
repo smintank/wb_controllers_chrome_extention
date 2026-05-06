@@ -1,5 +1,5 @@
 
-// Wirenboard Chrome Extension v2 (popup.js)
+import { renderDeviceList } from "./src/popup-view.js";
 
 const i18n = {
   en: {
@@ -38,68 +38,32 @@ function extractSerial(urlOrHostname) {
   return null;
 }
 
-
-function createDeviceElement(serial, hostname, isOnline) {
-  const li = document.createElement("li");
-  li.className = isOnline ? "online" : "offline";
-
-  const dot = document.createElement("span");
-  dot.className = isOnline ? "status green" : "status red";
-
-  const input = document.createElement("input");
-  input.value = name || serial;
-  input.title = `http://${hostname}/`;
-  input.className = "device-name";
-  input.placeholder = t.placeholder;
-  input.disabled = true;
-
-  const deleteBtn = document.createElement("span");
-  deleteBtn.innerText = "❌";
-  deleteBtn.className = "icon-button";
-  deleteBtn.title = t.cancel;
-
-  const link = document.createElement("a");
-  link.href = `http://${hostname}/`;
-  link.target = "_blank";
-  link.className = "device-link";
-  const wrapper = document.createElement("div");
-  wrapper.className = "device-wrapper";
-  wrapper.appendChild(link);
-  wrapper.appendChild(input);
-
-  deleteBtn.onclick = () => {
-    chrome.storage.local.get("devices", (data) => {
-      const devices = data.devices || {};
-      delete devices[hostname];
-      chrome.storage.local.set({ devices }, () => li.remove());
-    });
-  }
-
-  li.append(dot, wrapper, deleteBtn);
-  return li;
-}
-
 function renderDevices(onlineOnly = false) {
   chrome.storage.local.get("devices", (data) => {
     const devices = data.devices || {};
-    list.innerHTML = "";
-
     const entries = Object.entries(devices);
-    if (entries.length === 0) {
-      list.innerHTML = `<i>${t.noDevices}</i>`;
-      return;
-    }
+    const renderableDevices = [];
 
     for (const [hostname, info] of entries) {
       const serial = extractSerial(hostname);
       if (!serial) continue;
 
-      // показываем сразу с offline (серым) статусом
-      const el = createDeviceElement(serial, hostname, false);
-      list.appendChild(el);
+      renderableDevices.push({
+        hostname,
+        serial,
+        lastSeen: info.lastSeen ?? 0
+      });
+    }
 
-      // асинхронно проверяем статус
-      checkOnlineStatus(hostname, el, onlineOnly);
+    renderDeviceList(list, renderableDevices, {
+      noDevicesText: t.noDevices
+    });
+
+    for (const device of renderableDevices) {
+      const row = list.querySelector(`[data-hostname="${CSS.escape(device.hostname)}"]`);
+
+      if (!row) continue;
+      checkOnlineStatus(device.hostname, row, onlineOnly);
     }
   });
 }
@@ -107,23 +71,31 @@ function renderDevices(onlineOnly = false) {
 function checkOnlineStatus(hostname, li, onlineOnly) {
   fetch(`http://${hostname}/`, { method: "GET", mode: "no-cors" })
     .then(() => {
-      li.classList.remove("offline");
-      li.classList.add("online");
+      li.classList.remove("status-checking", "status-offline");
+      li.classList.add("status-online");
 
       const dot = li.querySelector(".status");
       if (dot) {
-        dot.classList.remove("red");
-        dot.classList.add("green");
+        dot.classList.remove("status-red", "status-gray");
+        dot.classList.add("status-green");
       }
 
-      // Если включён фильтр "только онлайн", и элемент был изначально false
       if (onlineOnly) {
-        li.style.display = ""; // показать
+        li.style.display = "";
       }
     })
     .catch(() => {
+      li.classList.remove("status-checking", "status-online");
+      li.classList.add("status-offline");
+
+      const dot = li.querySelector(".status");
+      if (dot) {
+        dot.classList.remove("status-green", "status-gray");
+        dot.classList.add("status-red");
+      }
+
       if (onlineOnly) {
-        li.style.display = "none"; // скрыть, если offline
+        li.style.display = "none";
       }
     });
 }

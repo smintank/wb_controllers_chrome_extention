@@ -17,56 +17,36 @@ ul {
   padding: 0;
 }
 
-li {
+.device-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   border-bottom: 1px solid #eee;
   padding: 6px 0;
+  gap: 8px;
 }
 
 .device-name {
-  border: none;
-  background: none;
   font-size: 14px;
-  width: 150px;
+  color: inherit;
 }
 
 .status {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  margin-right: 8px;
+  flex: 0 0 auto;
 }
 
-.green { background-color: #68b723; }
-.red { background-color: #e74c3c; }
+.status-gray { background-color: #b9c0c8; }
+.status-green { background-color: #68b723; }
+.status-red { background-color: #e74c3c; }
 
-.icon-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  margin-left: 4px;
-  font-size: 16px;
-}
-.device-wrapper {
-  position: relative;
-  flex-grow: 1;
+.device-primary {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
-.device-link {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  text-decoration: none;
-}
-
-.device-name {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  border: none;
-  background: transparent;
-  font-size: 14px;
-  color: inherit;
+.device-ssh-action,
+.device-menu-action {
+  flex: 0 0 auto;
 }
