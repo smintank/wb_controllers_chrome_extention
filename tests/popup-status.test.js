@@ -59,6 +59,7 @@ describe("refreshDeviceStatuses", () => {
     const firstRow = createRow("wirenboard-ab12cd34.local");
     const secondRow = createRow("wirenboard-ef56gh78.local");
     const resolutions = [];
+    const visibleRows = () => [firstRow, secondRow].filter((row) => row.style.display !== "none");
 
     const refreshPromise = refreshDeviceStatuses({
       devices: [
@@ -78,6 +79,7 @@ describe("refreshDeviceStatuses", () => {
 
     expect(firstRow.classList.contains("status-checking")).toBe(true);
     expect(secondRow.classList.contains("status-checking")).toBe(true);
+    expect(visibleRows()).toHaveLength(2);
 
     resolutions.find(({ hostname }) => hostname === "wirenboard-ef56gh78.local")?.resolve(false);
     await Promise.resolve();
@@ -85,11 +87,13 @@ describe("refreshDeviceStatuses", () => {
     expect(secondRow.classList.contains("status-offline")).toBe(true);
     expect(secondRow.style.display).toBe("none");
     expect(firstRow.classList.contains("status-checking")).toBe(true);
+    expect(visibleRows()).toHaveLength(1);
 
     resolutions.find(({ hostname }) => hostname === "wirenboard-ab12cd34.local")?.resolve(true);
     await refreshPromise;
 
     expect(firstRow.classList.contains("status-online")).toBe(true);
     expect(firstRow.style.display).toBe("");
+    expect(visibleRows()).toHaveLength(1);
   });
 });
