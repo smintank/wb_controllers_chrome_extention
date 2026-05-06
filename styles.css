@@ -23,6 +23,12 @@ ul {
   border-bottom: 1px solid #eee;
   padding: 6px 0;
   gap: 8px;
+  transition: background-color 120ms ease;
+}
+
+.device-row:hover,
+.device-row:focus-within {
+  background-color: #f3f4f6;
 }
 
 .device-name {
@@ -44,6 +50,12 @@ ul {
 .device-primary {
   flex: 1 1 auto;
   min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.device-primary:visited {
+  color: inherit;
 }
 
 .device-ssh-action,
