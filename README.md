@@ -2,6 +2,8 @@
 
 WB Controller Tracker is a small Chrome extension for keeping recently opened local Wiren Board controllers in one popup.
 
+![WB Controller Tracker popup](docs/release/assets/readme-popup-with-browser.png)
+
 It watches supported Wiren Board controller pages that you open in the browser, remembers them locally, and shows them as a compact list for quick access later. From the popup you can:
 
 - reopen a controller web UI;
