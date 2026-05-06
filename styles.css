@@ -19,12 +19,12 @@ ul {
 
 .device-row {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   border-bottom: 1px solid #eee;
-  padding: 6px 0;
-  gap: 8px;
+  gap: 4px;
   transition: background-color 120ms ease;
   position: relative;
+  min-height: 40px;
 }
 
 .device-row:hover,
@@ -53,10 +53,21 @@ ul {
   min-width: 0;
   color: inherit;
   text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 2px 6px 2px 0;
 }
 
 .device-primary:visited {
   color: inherit;
+}
+
+.device-primary:focus-visible,
+.device-ssh-action:focus-visible,
+.device-menu-action:focus-visible {
+  outline: 2px solid #8abf53;
+  outline-offset: -2px;
 }
 
 .device-ssh-action,
@@ -68,9 +79,9 @@ ul {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 28px;
   text-decoration: none;
+  align-self: stretch;
 }
 
 .device-ssh-action img {
@@ -92,8 +103,8 @@ ul {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  align-self: stretch;
   font-size: 18px;
   line-height: 1;
 }

@@ -97,10 +97,12 @@ describe("renderDeviceList", () => {
     );
 
     const primaryLink = list.querySelector(".device-primary");
+    const status = primaryLink?.querySelector(".status");
 
     expect(primaryLink?.tagName).toBe("A");
     expect(primaryLink?.getAttribute("href")).toBe("http://wirenboard-a1b2c3d4.local/");
     expect(primaryLink?.getAttribute("target")).toBe("_blank");
+    expect(status).not.toBeNull();
     expect(primaryLink?.textContent).toContain("A1B2C3D4");
   });
 

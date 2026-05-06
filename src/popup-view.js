@@ -97,10 +97,10 @@ export function renderDeviceList(list, devices, options = {}) {
       }
     });
 
-    primary.append(label);
+    primary.append(status, label);
     sshAction.append(sshIcon);
     menu.append(deleteAction);
-    row.append(status, primary, sshAction, menuAction, menu);
+    row.append(primary, sshAction, menuAction, menu);
     list.append(row);
   }
 }
