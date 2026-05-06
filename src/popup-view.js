@@ -1,8 +1,35 @@
 export function renderDeviceList(list, devices, options = {}) {
-  const { noDevicesText = "" } = options;
+  const { noDevicesText = "", deleteText = "Delete", menuLabel = "More", onDelete = null } = options;
   const sortedDevices = [...devices].sort((left, right) => left.serial.localeCompare(right.serial));
+  let openMenu = null;
+  const { ownerDocument } = list;
+
+  function hideOpenMenu() {
+    if (!openMenu) return;
+    openMenu.hidden = true;
+    openMenu = null;
+  }
 
   list.innerHTML = "";
+  if (list._outsideClickHandler) {
+    ownerDocument.removeEventListener("click", list._outsideClickHandler);
+  }
+
+  list._outsideClickHandler = (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) {
+      hideOpenMenu();
+      return;
+    }
+
+    if (target.closest(".device-menu") || target.closest(".device-menu-action")) {
+      return;
+    }
+
+    hideOpenMenu();
+  };
+
+  ownerDocument.addEventListener("click", list._outsideClickHandler);
 
   if (sortedDevices.length === 0) {
     const emptyState = document.createElement("i");
@@ -19,6 +46,8 @@ export function renderDeviceList(list, devices, options = {}) {
     const sshAction = document.createElement("a");
     const sshIcon = document.createElement("img");
     const menuAction = document.createElement("button");
+    const menu = document.createElement("div");
+    const deleteAction = document.createElement("button");
 
     row.className = "device-row";
     row.dataset.hostname = device.hostname;
@@ -38,11 +67,40 @@ export function renderDeviceList(list, devices, options = {}) {
     sshIcon.alt = "SSH";
     menuAction.className = "device-menu-action";
     menuAction.type = "button";
-    menuAction.hidden = true;
+    menuAction.textContent = "⋯";
+    menuAction.setAttribute("aria-label", menuLabel);
+    menu.hidden = true;
+    menu.className = "device-menu";
+    deleteAction.className = "device-delete-action";
+    deleteAction.type = "button";
+    deleteAction.textContent = deleteText;
+
+    menuAction.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (openMenu && openMenu !== menu) {
+        openMenu.hidden = true;
+      }
+
+      const shouldOpen = menu.hidden;
+      hideOpenMenu();
+      menu.hidden = !shouldOpen;
+      openMenu = shouldOpen ? menu : null;
+    });
+
+    deleteAction.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      hideOpenMenu();
+      if (typeof onDelete === "function") {
+        onDelete(device.hostname);
+      }
+    });
 
     primary.append(label);
     sshAction.append(sshIcon);
-    row.append(status, primary, sshAction, menuAction);
+    menu.append(deleteAction);
+    row.append(status, primary, sshAction, menuAction, menu);
     list.append(row);
   }
 }

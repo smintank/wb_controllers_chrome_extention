@@ -24,6 +24,7 @@ ul {
   padding: 6px 0;
   gap: 8px;
   transition: background-color 120ms ease;
+  position: relative;
 }
 
 .device-row:hover,
@@ -76,4 +77,47 @@ ul {
   display: block;
   width: 16px;
   height: 16px;
+}
+
+.device-menu-action,
+.device-delete-action {
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
+.device-menu-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.device-menu {
+  position: absolute;
+  top: calc(100% - 4px);
+  right: 0;
+  z-index: 10;
+  min-width: 120px;
+  padding: 6px 0;
+  border: 1px solid #e5e7eb;
+  background-color: #fff;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
+}
+
+.device-delete-action {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.device-delete-action:hover,
+.device-delete-action:focus-visible {
+  background-color: #f3f4f6;
 }

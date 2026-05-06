@@ -6,13 +6,15 @@ const i18n = {
     title: "Wiren Board Local Controllers",
     onlineOnly: "Online only",
     noDevices: "No controllers added yet. Visit one to see it here.",
-    cancel: "Cancel"
+    delete: "Delete",
+    moreActions: "More actions"
   },
   ru: {
     title: "Локальные контроллеры Wiren Board",
     onlineOnly: "Только онлайн",
     noDevices: "Контроллеры ещё не добавлены. Зайдите на один — и он появится здесь.",
-    cancel: "Отмена"
+    delete: "Удалить",
+    moreActions: "Ещё"
   }
 };
 
@@ -56,7 +58,10 @@ function renderDevices(onlineOnly = false) {
     }
 
     renderDeviceList(list, renderableDevices, {
-      noDevicesText: t.noDevices
+      noDevicesText: t.noDevices,
+      deleteText: t.delete,
+      menuLabel: t.moreActions,
+      onDelete: (hostname) => deleteDevice(hostname, onlineOnly)
     });
 
     for (const device of renderableDevices) {
@@ -65,6 +70,14 @@ function renderDevices(onlineOnly = false) {
       if (!row) continue;
       checkOnlineStatus(device.hostname, row, onlineOnly);
     }
+  });
+}
+
+function deleteDevice(hostname, onlineOnly) {
+  chrome.storage.local.get("devices", (data) => {
+    const devices = data.devices || {};
+    delete devices[hostname];
+    chrome.storage.local.set({ devices }, () => renderDevices(onlineOnly));
   });
 }
 

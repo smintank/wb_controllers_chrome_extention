@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { renderDeviceList } from "../src/popup-view.js";
 
@@ -126,5 +126,108 @@ describe("renderDeviceList", () => {
     expect(sshAction?.getAttribute("target")).toBe("_blank");
     expect(sshIcon?.getAttribute("src")).toBe("assets/ssh.svg");
     expect(sshIcon?.getAttribute("alt")).toBe("SSH");
+  });
+
+  it("раскрывает overflow-меню и отдает hostname удаляемого контроллера", () => {
+    const list = document.createElement("ul");
+    const onDelete = vi.fn();
+
+    renderDeviceList(
+      list,
+      [
+        {
+          hostname: "wirenboard-a1b2c3d4.local",
+          serial: "A1B2C3D4"
+        }
+      ],
+      {
+        deleteText: "Удалить",
+        menuLabel: "Ещё",
+        onDelete
+      }
+    );
+
+    const menuAction = list.querySelector(".device-menu-action");
+    const menu = list.querySelector(".device-menu");
+
+    expect(menuAction?.hidden).toBe(false);
+    expect(menu?.hidden).toBe(true);
+
+    menuAction?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    const deleteAction = list.querySelector(".device-delete-action");
+
+    expect(menu?.hidden).toBe(false);
+    expect(deleteAction?.textContent).toContain("Удалить");
+
+    deleteAction?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    expect(onDelete).toHaveBeenCalledWith("wirenboard-a1b2c3d4.local");
+  });
+
+  it("закрывает открытое меню по клику в пустое место списка", () => {
+    const container = document.createElement("div");
+    const list = document.createElement("ul");
+    const emptySpace = document.createElement("div");
+
+    container.append(list, emptySpace);
+    document.body.append(container);
+
+    renderDeviceList(
+      list,
+      [
+        {
+          hostname: "wirenboard-a1b2c3d4.local",
+          serial: "A1B2C3D4"
+        }
+      ],
+      {
+        deleteText: "Удалить",
+        menuLabel: "Ещё"
+      }
+    );
+
+    const menuAction = list.querySelector(".device-menu-action");
+    const menu = list.querySelector(".device-menu");
+
+    menuAction?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(menu?.hidden).toBe(false);
+
+    emptySpace.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    expect(menu?.hidden).toBe(true);
+  });
+
+  it("держит открытым только одно overflow-меню одновременно", () => {
+    const list = document.createElement("ul");
+
+    renderDeviceList(
+      list,
+      [
+        {
+          hostname: "wirenboard-b1b2c3d4.local",
+          serial: "B1B2C3D4"
+        },
+        {
+          hostname: "wirenboard-a1b2c3d4.local",
+          serial: "A1B2C3D4"
+        }
+      ],
+      {
+        deleteText: "Удалить",
+        menuLabel: "Ещё"
+      }
+    );
+
+    const menuActions = [...list.querySelectorAll(".device-menu-action")];
+    const menus = [...list.querySelectorAll(".device-menu")];
+
+    menuActions[0]?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(menus[0]?.hidden).toBe(false);
+    expect(menus[1]?.hidden).toBe(true);
+
+    menuActions[1]?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(menus[0]?.hidden).toBe(true);
+    expect(menus[1]?.hidden).toBe(false);
   });
 });
