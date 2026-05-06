@@ -2,6 +2,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 
+import { popupCopy } from "../src/popup-copy.js";
 import { renderDeviceList } from "../src/popup-view.js";
 
 describe("renderDeviceList", () => {
@@ -9,12 +10,11 @@ describe("renderDeviceList", () => {
     const list = document.createElement("ul");
 
     renderDeviceList(list, [], {
-      noDevicesText: "Контроллеры ещё не добавлены. Зайдите на один — и он появится здесь."
+      noDevicesText: popupCopy.ru.noDevices
     });
 
-    expect(list.textContent).toContain(
-      "Контроллеры ещё не добавлены. Зайдите на один — и он появится здесь."
-    );
+    expect(list.textContent).toContain(popupCopy.ru.noDevices);
+    expect(list.textContent).toContain("web UI");
     expect(list.querySelectorAll("li")).toHaveLength(0);
   });
 
