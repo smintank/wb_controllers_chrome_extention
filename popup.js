@@ -1,33 +1,17 @@
 
 import { extractSerialFromWirenBoardHost } from "./src/controller-discovery.js";
+import { getPopupCopy } from "./src/popup-copy.js";
 import { applyDeviceStatus, refreshDeviceStatuses } from "./src/popup-status.js";
 import { renderDeviceList } from "./src/popup-view.js";
 
-const i18n = {
-  en: {
-    title: "Wiren Board Local Controllers",
-    onlineOnly: "Online only",
-    noDevices: "No controllers added yet. Visit one to see it here.",
-    delete: "Delete",
-    moreActions: "More actions"
-  },
-  ru: {
-    title: "Локальные контроллеры Wiren Board",
-    onlineOnly: "Только онлайн",
-    noDevices: "Контроллеры ещё не добавлены. Зайдите на один — и он появится здесь.",
-    delete: "Удалить",
-    moreActions: "Ещё"
-  }
-};
-
-const lang = navigator.language.startsWith("ru") ? "ru" : "en";
-const t = i18n[lang];
+const t = getPopupCopy(navigator.language);
 
 const list = document.getElementById("device-list");
 const title = document.getElementById("title");
 const toggle = document.getElementById("online-only");
 const label = document.getElementById("online-label");
 
+document.title = t.popupTitle;
 if (title) title.innerText = t.title;
 if (label) label.innerText = t.onlineOnly;
 
