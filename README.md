@@ -32,7 +32,7 @@ npm run package:extension
 4. Open `chrome://extensions/` in Chrome.
 5. Enable `Developer mode`.
 6. Click `Load unpacked`.
-7. Select the folder [dist/chrome-extension](/Users/smintank/Projects/wb_controllers-tracker/wb_controllers_tracker_v1_1/dist/chrome-extension).
+7. Select the `dist/chrome-extension` folder inside your local copy of this repository.
 
 After that, open a supported Wiren Board controller page in your browser. The controller will be remembered and will appear in the extension popup.
 
