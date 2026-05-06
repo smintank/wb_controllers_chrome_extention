@@ -50,3 +50,18 @@ ul {
 .device-menu-action {
   flex: 0 0 auto;
 }
+
+.device-ssh-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  text-decoration: none;
+}
+
+.device-ssh-action img {
+  display: block;
+  width: 16px;
+  height: 16px;
+}

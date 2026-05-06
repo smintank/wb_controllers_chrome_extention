@@ -103,4 +103,28 @@ describe("renderDeviceList", () => {
     expect(primaryLink?.getAttribute("target")).toBe("_blank");
     expect(primaryLink?.textContent).toContain("A1B2C3D4");
   });
+
+  it("рендерит отдельное SSH-действие с локальной SVG-иконкой", () => {
+    const list = document.createElement("ul");
+
+    renderDeviceList(
+      list,
+      [
+        {
+          hostname: "wirenboard-a1b2c3d4.local",
+          serial: "A1B2C3D4"
+        }
+      ],
+      {}
+    );
+
+    const sshAction = list.querySelector(".device-ssh-action");
+    const sshIcon = sshAction?.querySelector("img");
+
+    expect(sshAction?.tagName).toBe("A");
+    expect(sshAction?.getAttribute("href")).toBe("ssh://root@wirenboard-a1b2c3d4.local");
+    expect(sshAction?.getAttribute("target")).toBe("_blank");
+    expect(sshIcon?.getAttribute("src")).toBe("assets/ssh.svg");
+    expect(sshIcon?.getAttribute("alt")).toBe("SSH");
+  });
 });

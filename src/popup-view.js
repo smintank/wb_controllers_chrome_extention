@@ -16,7 +16,8 @@ export function renderDeviceList(list, devices, options = {}) {
     const status = document.createElement("span");
     const primary = document.createElement("a");
     const label = document.createElement("span");
-    const sshAction = document.createElement("button");
+    const sshAction = document.createElement("a");
+    const sshIcon = document.createElement("img");
     const menuAction = document.createElement("button");
 
     row.className = "device-row";
@@ -30,13 +31,17 @@ export function renderDeviceList(list, devices, options = {}) {
     label.className = "device-name";
     label.textContent = device.serial;
     sshAction.className = "device-ssh-action";
-    sshAction.type = "button";
-    sshAction.hidden = true;
+    sshAction.href = `ssh://root@${device.hostname}`;
+    sshAction.target = "_blank";
+    sshAction.rel = "noopener noreferrer";
+    sshIcon.src = "assets/ssh.svg";
+    sshIcon.alt = "SSH";
     menuAction.className = "device-menu-action";
     menuAction.type = "button";
     menuAction.hidden = true;
 
     primary.append(label);
+    sshAction.append(sshIcon);
     row.append(status, primary, sshAction, menuAction);
     list.append(row);
   }
