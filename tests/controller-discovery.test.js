@@ -2,25 +2,36 @@ import { describe, expect, it } from "vitest";
 
 import {
   discoverControllerFromUrl,
-  extractSerialFromWirenBoardHost
+  extractSerialFromWirenBoardHost,
+  normalizeStoredDevices
 } from "../src/controller-discovery.js";
 
 describe("discoverControllerFromUrl", () => {
-  it("распознает удаленный URL wirenboard и канонизирует hostname в .local", () => {
+  it("сохраняет фактический https-origin удаленного URL и выводит SSH на IP", () => {
     expect(
-      discoverControllerFromUrl("https://10-11-12-13.ab12cd34.ip.wirenboard.com/#/devices")
+      discoverControllerFromUrl("https://192-168-1-157.amkfevl4.ip.wirenboard.com/#/devices")
     ).toEqual({
-      hostname: "wirenboard-ab12cd34.local",
-      serial: "AB12CD34"
+      serial: "AMKFEVL4",
+      origin: "https://192-168-1-157.amkfevl4.ip.wirenboard.com",
+      sshHost: "192.168.1.157"
     });
   });
 
-  it("распознает локальный URL wirenboard и нормализует регистр serial", () => {
+  it("сохраняет нестандартный порт в origin удаленного URL", () => {
     expect(
-      discoverControllerFromUrl("http://wirenboard-Ab12cD34.local/settings")
+      discoverControllerFromUrl("https://10-11-12-13.ab12cd34.ip.wirenboard.com:8443/")
     ).toEqual({
-      hostname: "wirenboard-ab12cd34.local",
-      serial: "AB12CD34"
+      serial: "AB12CD34",
+      origin: "https://10-11-12-13.ab12cd34.ip.wirenboard.com:8443",
+      sshHost: "10.11.12.13"
+    });
+  });
+
+  it("для локального URL хранит http .local origin и SSH на .local, нормализует serial", () => {
+    expect(discoverControllerFromUrl("http://wirenboard-Ab12cD34.local/settings")).toEqual({
+      serial: "AB12CD34",
+      origin: "http://wirenboard-ab12cd34.local",
+      sshHost: "wirenboard-ab12cd34.local"
     });
   });
 
@@ -43,5 +54,86 @@ describe("extractSerialFromWirenBoardHost", () => {
 
   it("возвращает null для неподдерживаемого hostname", () => {
     expect(extractSerialFromWirenBoardHost("wirenboard-abcd.local")).toBeNull();
+  });
+});
+
+describe("normalizeStoredDevices", () => {
+  it("оставляет запись нового формата как есть и не помечает изменений", () => {
+    const raw = {
+      AMKFEVL4: {
+        serial: "AMKFEVL4",
+        origin: "https://192-168-1-157.amkfevl4.ip.wirenboard.com",
+        sshHost: "192.168.1.157",
+        lastSeen: 100
+      }
+    };
+
+    const result = normalizeStoredDevices(raw);
+
+    expect(result.changed).toBe(false);
+    expect(result.devices).toEqual({
+      AMKFEVL4: {
+        serial: "AMKFEVL4",
+        origin: "https://192-168-1-157.amkfevl4.ip.wirenboard.com",
+        sshHost: "192.168.1.157",
+        lastSeen: 100
+      }
+    });
+  });
+
+  it("мигрирует запись старого формата (ключ .local, без origin) в формат по serial", () => {
+    const raw = {
+      "wirenboard-ab12cd34.local": { serial: "AB12CD34", lastSeen: 50, online: false }
+    };
+
+    const result = normalizeStoredDevices(raw);
+
+    expect(result.changed).toBe(true);
+    expect(result.devices).toEqual({
+      AB12CD34: {
+        serial: "AB12CD34",
+        origin: "http://wirenboard-ab12cd34.local",
+        sshHost: "wirenboard-ab12cd34.local",
+        lastSeen: 50
+      }
+    });
+  });
+
+  it("схлопывает старую и новую записи одного контроллера, оставляя самую свежую", () => {
+    const raw = {
+      "wirenboard-amkfevl4.local": { serial: "AMKFEVL4", lastSeen: 10, online: false },
+      AMKFEVL4: {
+        serial: "AMKFEVL4",
+        origin: "https://192-168-1-157.amkfevl4.ip.wirenboard.com",
+        sshHost: "192.168.1.157",
+        lastSeen: 99
+      }
+    };
+
+    const result = normalizeStoredDevices(raw);
+
+    expect(result.changed).toBe(true);
+    expect(Object.keys(result.devices)).toEqual(["AMKFEVL4"]);
+    expect(result.devices.AMKFEVL4.origin).toBe(
+      "https://192-168-1-157.amkfevl4.ip.wirenboard.com"
+    );
+    expect(result.devices.AMKFEVL4.lastSeen).toBe(99);
+  });
+
+  it("отбрасывает мусорные записи без распознаваемого serial", () => {
+    const raw = {
+      "not-a-controller": { lastSeen: 1 },
+      AB12CD34: {
+        serial: "AB12CD34",
+        origin: "http://wirenboard-ab12cd34.local",
+        sshHost: "wirenboard-ab12cd34.local",
+        lastSeen: 5
+      }
+    };
+
+    const result = normalizeStoredDevices(raw);
+
+    expect(result.changed).toBe(true);
+    expect(Object.keys(result.devices)).toEqual(["AB12CD34"]);
   });
 });

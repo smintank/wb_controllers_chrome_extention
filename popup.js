@@ -1,5 +1,5 @@
 
-import { extractSerialFromWirenBoardHost } from "./src/controller-discovery.js";
+import { normalizeStoredDevices } from "./src/controller-discovery.js";
 import { getPopupCopy } from "./src/popup-copy.js";
 import { applyDeviceStatus, refreshDeviceStatuses } from "./src/popup-status.js";
 import { renderDeviceList } from "./src/popup-view.js";
@@ -15,32 +15,33 @@ document.title = t.popupTitle;
 if (title) title.innerText = t.title;
 if (label) label.innerText = t.onlineOnly;
 
+function findRow(serial) {
+  return list.querySelector(`[data-serial="${CSS.escape(serial)}"]`);
+}
+
 function renderDevices(onlineOnly = false) {
   chrome.storage.local.get("devices", (data) => {
-    const devices = data.devices || {};
-    const entries = Object.entries(devices);
-    const renderableDevices = [];
-
-    for (const [hostname, info] of entries) {
-      const serial = extractSerialFromWirenBoardHost(hostname);
-      if (!serial) continue;
-
-      renderableDevices.push({
-        hostname,
-        serial,
-        lastSeen: info.lastSeen ?? 0
-      });
+    const { devices, changed } = normalizeStoredDevices(data.devices || {});
+    if (changed) {
+      chrome.storage.local.set({ devices });
     }
+
+    const renderableDevices = Object.values(devices).map((device) => ({
+      serial: device.serial,
+      origin: device.origin,
+      sshHost: device.sshHost,
+      lastSeen: device.lastSeen ?? 0
+    }));
 
     renderDeviceList(list, renderableDevices, {
       noDevicesText: t.noDevices,
       deleteText: t.delete,
       menuLabel: t.moreActions,
-      onDelete: (hostname) => deleteDevice(hostname, onlineOnly)
+      onDelete: (serial) => deleteDevice(serial, onlineOnly)
     });
 
     for (const device of renderableDevices) {
-      const row = list.querySelector(`[data-hostname="${CSS.escape(device.hostname)}"]`);
+      const row = findRow(device.serial);
       if (row) {
         applyDeviceStatus(row, "checking", onlineOnly);
       }
@@ -48,25 +49,23 @@ function renderDevices(onlineOnly = false) {
 
     void refreshDeviceStatuses({
       devices: renderableDevices,
-      findRowByHostname(hostname) {
-        return list.querySelector(`[data-hostname="${CSS.escape(hostname)}"]`);
-      },
+      findRow: (device) => findRow(device.serial),
       onlineOnly,
-      checkOnline: checkOnlineStatus
+      checkOnline: (device) => checkOnlineStatus(device.origin)
     });
   });
 }
 
-function deleteDevice(hostname, onlineOnly) {
+function deleteDevice(serial, onlineOnly) {
   chrome.storage.local.get("devices", (data) => {
     const devices = data.devices || {};
-    delete devices[hostname];
+    delete devices[serial];
     chrome.storage.local.set({ devices }, () => renderDevices(onlineOnly));
   });
 }
 
-function checkOnlineStatus(hostname) {
-  return fetch(`http://${hostname}/`, { method: "GET", mode: "no-cors" })
+function checkOnlineStatus(origin) {
+  return fetch(`${origin}/`, { method: "GET", mode: "no-cors" })
     .then(() => true)
     .catch(() => false);
 }
