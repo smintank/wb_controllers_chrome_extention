@@ -13,6 +13,21 @@ function localOrigin(serial) {
   return `http://${localHostname(serial)}`;
 }
 
+// The controller web UI always lives at the host root on the default port, so
+// drop any port and path: a side service on another port/subpath of the same
+// host must not be remembered as the controller's address.
+function controllerOrigin(url) {
+  return `${url.protocol}//${url.hostname}`;
+}
+
+function canonicalizeOrigin(origin) {
+  try {
+    return controllerOrigin(new URL(origin));
+  } catch {
+    return null;
+  }
+}
+
 export function extractSerialFromWirenBoardHost(hostname) {
   const localMatch = hostname.match(LOCAL_HOST_PATTERN);
   if (localMatch) {
@@ -52,7 +67,7 @@ export function discoverControllerFromUrl(urlString) {
 
   return {
     serial,
-    origin: url.origin,
+    origin: controllerOrigin(url),
     sshHost: deriveSshHost(url.hostname)
   };
 }
@@ -83,6 +98,16 @@ export function normalizeStoredDevices(rawDevices = {}) {
       origin = localOrigin(serial);
       sshHost = localHostname(serial);
       changed = true;
+    } else {
+      const canonical = canonicalizeOrigin(origin);
+      if (!canonical) {
+        origin = localOrigin(serial);
+        sshHost = localHostname(serial);
+        changed = true;
+      } else if (canonical !== origin) {
+        origin = canonical;
+        changed = true;
+      }
     }
 
     const lastSeen = info.lastSeen ?? 0;

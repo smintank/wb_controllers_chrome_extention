@@ -17,13 +17,23 @@ describe("discoverControllerFromUrl", () => {
     });
   });
 
-  it("сохраняет нестандартный порт в origin удаленного URL", () => {
+  it("отбрасывает нестандартный порт — контроллер всегда на дефолтном порту в корне", () => {
     expect(
       discoverControllerFromUrl("https://10-11-12-13.ab12cd34.ip.wirenboard.com:8443/")
     ).toEqual({
       serial: "AB12CD34",
-      origin: "https://10-11-12-13.ab12cd34.ip.wirenboard.com:8443",
+      origin: "https://10-11-12-13.ab12cd34.ip.wirenboard.com",
       sshHost: "10.11.12.13"
+    });
+  });
+
+  it("отбрасывает порт и подпуть стороннего сервиса на том же контроллере", () => {
+    expect(
+      discoverControllerFromUrl("https://192-168-1-157.amkfevl4.ip.wirenboard.com:3000/grafana/d/x")
+    ).toEqual({
+      serial: "AMKFEVL4",
+      origin: "https://192-168-1-157.amkfevl4.ip.wirenboard.com",
+      sshHost: "192.168.1.157"
     });
   });
 
@@ -118,6 +128,24 @@ describe("normalizeStoredDevices", () => {
       "https://192-168-1-157.amkfevl4.ip.wirenboard.com"
     );
     expect(result.devices.AMKFEVL4.lastSeen).toBe(99);
+  });
+
+  it("убирает порт из ранее сохраненного origin (самолечение)", () => {
+    const raw = {
+      AMKFEVL4: {
+        serial: "AMKFEVL4",
+        origin: "https://192-168-1-157.amkfevl4.ip.wirenboard.com:8443",
+        sshHost: "192.168.1.157",
+        lastSeen: 100
+      }
+    };
+
+    const result = normalizeStoredDevices(raw);
+
+    expect(result.changed).toBe(true);
+    expect(result.devices.AMKFEVL4.origin).toBe(
+      "https://192-168-1-157.amkfevl4.ip.wirenboard.com"
+    );
   });
 
   it("отбрасывает мусорные записи без распознаваемого serial", () => {
