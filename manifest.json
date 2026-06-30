@@ -18,7 +18,7 @@
       "128": "icon.png"
     }
   },
-  "permissions": ["storage", "tabs", "activeTab", "scripting"],
+  "permissions": ["storage", "tabs", "activeTab", "scripting", "clipboardWrite"],
   "host_permissions": ["http://*/", "https://*/"],
   "background": {
     "service_worker": "background.js",

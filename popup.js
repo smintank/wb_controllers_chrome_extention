@@ -37,7 +37,10 @@ function renderDevices(onlineOnly = false) {
       noDevicesText: t.noDevices,
       deleteText: t.delete,
       menuLabel: t.moreActions,
-      onDelete: (serial) => deleteDevice(serial, onlineOnly)
+      copyLabel: t.copyName,
+      copiedLabel: t.copiedName,
+      onDelete: (serial) => deleteDevice(serial, onlineOnly),
+      onCopy: (serial) => copyDeviceName(serial)
     });
 
     for (const device of renderableDevices) {
@@ -62,6 +65,10 @@ function deleteDevice(serial, onlineOnly) {
     delete devices[serial];
     chrome.storage.local.set({ devices }, () => renderDevices(onlineOnly));
   });
+}
+
+function copyDeviceName(serial) {
+  return navigator.clipboard?.writeText(serial);
 }
 
 function checkOnlineStatus(origin) {

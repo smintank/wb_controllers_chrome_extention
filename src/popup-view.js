@@ -1,5 +1,13 @@
 export function renderDeviceList(list, devices, options = {}) {
-  const { noDevicesText = "", deleteText = "Delete", menuLabel = "More", onDelete = null } = options;
+  const {
+    noDevicesText = "",
+    deleteText = "Delete",
+    menuLabel = "More",
+    copyLabel = "Copy name",
+    copiedLabel = "Copied",
+    onDelete = null,
+    onCopy = null
+  } = options;
   const sortedDevices = [...devices].sort((left, right) => left.serial.localeCompare(right.serial));
   let openMenu = null;
   const { ownerDocument } = list;
@@ -43,6 +51,8 @@ export function renderDeviceList(list, devices, options = {}) {
     const status = document.createElement("span");
     const primary = document.createElement("a");
     const label = document.createElement("span");
+    const copyAction = document.createElement("button");
+    const copyIcon = document.createElement("img");
     const sshAction = document.createElement("a");
     const sshIcon = document.createElement("img");
     const menuAction = document.createElement("button");
@@ -59,6 +69,12 @@ export function renderDeviceList(list, devices, options = {}) {
     primary.rel = "noopener noreferrer";
     label.className = "device-name";
     label.textContent = device.serial;
+    copyAction.className = "device-copy-action";
+    copyAction.type = "button";
+    copyAction.setAttribute("aria-label", copyLabel);
+    copyAction.title = copyLabel;
+    copyIcon.src = "assets/copy.svg";
+    copyIcon.alt = "";
     sshAction.className = "device-ssh-action";
     sshAction.href = `ssh://root@${device.sshHost}`;
     sshAction.target = "_blank";
@@ -88,6 +104,29 @@ export function renderDeviceList(list, devices, options = {}) {
       openMenu = shouldOpen ? menu : null;
     });
 
+    let copiedResetTimer = null;
+    copyAction.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      hideOpenMenu();
+      if (typeof onCopy === "function") {
+        onCopy(device.serial);
+      }
+
+      copyAction.classList.add("is-copied");
+      copyAction.setAttribute("aria-label", copiedLabel);
+      copyAction.title = copiedLabel;
+      if (copiedResetTimer) {
+        clearTimeout(copiedResetTimer);
+      }
+      copiedResetTimer = setTimeout(() => {
+        copyAction.classList.remove("is-copied");
+        copyAction.setAttribute("aria-label", copyLabel);
+        copyAction.title = copyLabel;
+        copiedResetTimer = null;
+      }, 1200);
+    });
+
     deleteAction.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -98,9 +137,10 @@ export function renderDeviceList(list, devices, options = {}) {
     });
 
     primary.append(status, label);
+    copyAction.append(copyIcon);
     sshAction.append(sshIcon);
     menu.append(deleteAction);
-    row.append(primary, sshAction, menuAction, menu);
+    row.append(primary, copyAction, sshAction, menuAction, menu);
     list.append(row);
   }
 }

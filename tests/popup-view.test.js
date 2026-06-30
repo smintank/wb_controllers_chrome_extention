@@ -56,8 +56,65 @@ describe("renderDeviceList", () => {
     const row = list.querySelector("li");
 
     expect(row?.querySelector(".device-primary")).not.toBeNull();
+    expect(row?.querySelector(".device-copy-action")).not.toBeNull();
     expect(row?.querySelector(".device-ssh-action")).not.toBeNull();
     expect(row?.querySelector(".device-menu-action")).not.toBeNull();
+  });
+
+  it("ставит кнопку копирования между именем и SSH-действием", () => {
+    const list = document.createElement("ul");
+
+    renderDeviceList(list, [remoteDevice("A1B2C3D4", 157)], {});
+
+    const actions = [...list.querySelector("li").children].map((node) => node.className);
+    const copyIndex = actions.indexOf("device-copy-action");
+    const sshIndex = actions.indexOf("device-ssh-action");
+
+    expect(actions.indexOf("device-primary")).toBeLessThan(copyIndex);
+    expect(copyIndex).toBeLessThan(sshIndex);
+  });
+
+  it("копирует имя контроллера и показывает состояние «скопировано»", () => {
+    const list = document.createElement("ul");
+    const onCopy = vi.fn();
+
+    renderDeviceList(list, [remoteDevice("A1B2C3D4", 157)], {
+      copyLabel: "Копировать имя",
+      copiedLabel: "Скопировано",
+      onCopy
+    });
+
+    const copyAction = list.querySelector(".device-copy-action");
+
+    expect(copyAction?.tagName).toBe("BUTTON");
+    expect(copyAction?.getAttribute("aria-label")).toBe("Копировать имя");
+    expect(copyAction?.querySelector("img")?.getAttribute("src")).toBe("assets/copy.svg");
+
+    copyAction?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    expect(onCopy).toHaveBeenCalledWith("A1B2C3D4");
+    expect(copyAction?.classList.contains("is-copied")).toBe(true);
+    expect(copyAction?.getAttribute("aria-label")).toBe("Скопировано");
+  });
+
+  it("сбрасывает состояние «скопировано» обратно через таймаут", () => {
+    vi.useFakeTimers();
+    const list = document.createElement("ul");
+
+    renderDeviceList(list, [remoteDevice("A1B2C3D4", 157)], {
+      copyLabel: "Копировать имя",
+      copiedLabel: "Скопировано"
+    });
+
+    const copyAction = list.querySelector(".device-copy-action");
+    copyAction?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(copyAction?.classList.contains("is-copied")).toBe(true);
+
+    vi.advanceTimersByTime(1200);
+
+    expect(copyAction?.classList.contains("is-copied")).toBe(false);
+    expect(copyAction?.getAttribute("aria-label")).toBe("Копировать имя");
+    vi.useRealTimers();
   });
 
   it("ведет основную зону строки на сохраненный origin контроллера", () => {

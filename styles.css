@@ -64,15 +64,49 @@ ul {
 }
 
 .device-primary:focus-visible,
+.device-copy-action:focus-visible,
 .device-ssh-action:focus-visible,
 .device-menu-action:focus-visible {
   outline: 2px solid #8abf53;
   outline-offset: -2px;
 }
 
+.device-copy-action,
 .device-ssh-action,
 .device-menu-action {
   flex: 0 0 auto;
+}
+
+.device-copy-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  align-self: stretch;
+  position: relative;
+}
+
+.device-copy-action img {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+.device-copy-action.is-copied img {
+  visibility: hidden;
+}
+
+.device-copy-action.is-copied::after {
+  content: "✓";
+  position: absolute;
+  color: #68b723;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .device-ssh-action {
