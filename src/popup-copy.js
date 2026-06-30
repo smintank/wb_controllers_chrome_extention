@@ -5,7 +5,9 @@ export const popupCopy = {
     onlineOnly: "Online only",
     noDevices: "No controllers added yet. Open a controller web UI once and it will appear here.",
     delete: "Delete",
-    moreActions: "More actions"
+    moreActions: "More actions",
+    copyName: "Copy name",
+    copiedName: "Copied"
   },
   ru: {
     title: "Локальные контроллеры Wiren Board",
@@ -13,7 +15,9 @@ export const popupCopy = {
     onlineOnly: "Только онлайн",
     noDevices: "Контроллеры ещё не добавлены. Откройте web UI контроллера один раз, и он появится здесь.",
     delete: "Удалить",
-    moreActions: "Ещё"
+    moreActions: "Ещё",
+    copyName: "Копировать имя",
+    copiedName: "Скопировано"
   }
 };
 
