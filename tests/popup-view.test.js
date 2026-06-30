@@ -5,6 +5,14 @@ import { describe, expect, it, vi } from "vitest";
 import { popupCopy } from "../src/popup-copy.js";
 import { renderDeviceList } from "../src/popup-view.js";
 
+function remoteDevice(serial, lastOctet) {
+  return {
+    serial,
+    origin: `https://192-168-1-${lastOctet}.${serial.toLowerCase()}.ip.wirenboard.com`,
+    sshHost: `192.168.1.${lastOctet}`
+  };
+}
+
 describe("renderDeviceList", () => {
   it("показывает пустое состояние, если контроллеров нет", () => {
     const list = document.createElement("ul");
@@ -21,40 +29,19 @@ describe("renderDeviceList", () => {
   it("рендерит строку контроллера по serial без несуществующих полей", () => {
     const list = document.createElement("ul");
 
-    renderDeviceList(
-      list,
-      [
-        {
-          hostname: "wirenboard-a1b2c3d4.local",
-          serial: "A1B2C3D4"
-        }
-      ],
-      {}
-    );
+    renderDeviceList(list, [remoteDevice("A1B2C3D4", 157)], {});
 
     const rows = list.querySelectorAll("li");
     expect(rows).toHaveLength(1);
     expect(rows[0].textContent).toContain("A1B2C3D4");
+    expect(rows[0].dataset.serial).toBe("A1B2C3D4");
     expect(rows[0].querySelector("input")).toBeNull();
   });
 
   it("сортирует контроллеры по serial", () => {
     const list = document.createElement("ul");
 
-    renderDeviceList(
-      list,
-      [
-        {
-          hostname: "wirenboard-b1b2c3d4.local",
-          serial: "B1B2C3D4"
-        },
-        {
-          hostname: "wirenboard-a1b2c3d4.local",
-          serial: "A1B2C3D4"
-        }
-      ],
-      {}
-    );
+    renderDeviceList(list, [remoteDevice("B1B2C3D4", 11), remoteDevice("A1B2C3D4", 12)], {});
 
     const labels = [...list.querySelectorAll(".device-name")].map((node) => node.textContent);
 
@@ -64,16 +51,7 @@ describe("renderDeviceList", () => {
   it("создает отдельные зоны строки для primary area, SSH и overflow", () => {
     const list = document.createElement("ul");
 
-    renderDeviceList(
-      list,
-      [
-        {
-          hostname: "wirenboard-a1b2c3d4.local",
-          serial: "A1B2C3D4"
-        }
-      ],
-      {}
-    );
+    renderDeviceList(list, [remoteDevice("A1B2C3D4", 157)], {});
 
     const row = list.querySelector("li");
 
@@ -82,72 +60,66 @@ describe("renderDeviceList", () => {
     expect(row?.querySelector(".device-menu-action")).not.toBeNull();
   });
 
-  it("делает основную зону строки ссылкой на web UI контроллера", () => {
+  it("ведет основную зону строки на сохраненный origin контроллера", () => {
+    const list = document.createElement("ul");
+
+    renderDeviceList(list, [remoteDevice("A1B2C3D4", 157)], {});
+
+    const primaryLink = list.querySelector(".device-primary");
+    const status = primaryLink?.querySelector(".status");
+
+    expect(primaryLink?.tagName).toBe("A");
+    expect(primaryLink?.getAttribute("href")).toBe(
+      "https://192-168-1-157.a1b2c3d4.ip.wirenboard.com/"
+    );
+    expect(primaryLink?.getAttribute("target")).toBe("_blank");
+    expect(status).not.toBeNull();
+    expect(primaryLink?.textContent).toContain("A1B2C3D4");
+  });
+
+  it("ведет основную зону строки на http .local origin для локального контроллера", () => {
     const list = document.createElement("ul");
 
     renderDeviceList(
       list,
       [
         {
-          hostname: "wirenboard-a1b2c3d4.local",
-          serial: "A1B2C3D4"
+          serial: "A1B2C3D4",
+          origin: "http://wirenboard-a1b2c3d4.local",
+          sshHost: "wirenboard-a1b2c3d4.local"
         }
       ],
       {}
     );
 
     const primaryLink = list.querySelector(".device-primary");
-    const status = primaryLink?.querySelector(".status");
-
-    expect(primaryLink?.tagName).toBe("A");
     expect(primaryLink?.getAttribute("href")).toBe("http://wirenboard-a1b2c3d4.local/");
-    expect(primaryLink?.getAttribute("target")).toBe("_blank");
-    expect(status).not.toBeNull();
-    expect(primaryLink?.textContent).toContain("A1B2C3D4");
   });
 
-  it("рендерит отдельное SSH-действие с локальной SVG-иконкой", () => {
+  it("рендерит отдельное SSH-действие на sshHost с локальной SVG-иконкой", () => {
     const list = document.createElement("ul");
 
-    renderDeviceList(
-      list,
-      [
-        {
-          hostname: "wirenboard-a1b2c3d4.local",
-          serial: "A1B2C3D4"
-        }
-      ],
-      {}
-    );
+    renderDeviceList(list, [remoteDevice("A1B2C3D4", 157)], {});
 
     const sshAction = list.querySelector(".device-ssh-action");
     const sshIcon = sshAction?.querySelector("img");
 
     expect(sshAction?.tagName).toBe("A");
-    expect(sshAction?.getAttribute("href")).toBe("ssh://root@wirenboard-a1b2c3d4.local");
+    expect(sshAction?.getAttribute("href")).toBe("ssh://root@192.168.1.157");
     expect(sshAction?.getAttribute("target")).toBe("_blank");
     expect(sshIcon?.getAttribute("src")).toBe("assets/ssh.svg");
     expect(sshIcon?.getAttribute("alt")).toBe("SSH");
   });
 
-  it("раскрывает overflow-меню и отдает hostname удаляемого контроллера", () => {
+  it("раскрывает overflow-меню и отдает serial удаляемого контроллера", () => {
     const list = document.createElement("ul");
     const onDelete = vi.fn();
 
-    renderDeviceList(
-      list,
-      [
-        {
-          hostname: "wirenboard-a1b2c3d4.local",
-          serial: "A1B2C3D4"
-        }
-      ],
-      {
-        deleteText: "Удалить",
-        menuLabel: "Ещё",
-        onDelete
-      }
-    );
+    renderDeviceList(list, [remoteDevice("A1B2C3D4", 157)], {
+      deleteText: "Удалить",
+      menuLabel: "Ещё",
+      onDelete
+    });
 
     const menuAction = list.querySelector(".device-menu-action");
     const menu = list.querySelector(".device-menu");
@@ -164,7 +136,7 @@ describe("renderDeviceList", () => {
 
     deleteAction?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
 
-    expect(onDelete).toHaveBeenCalledWith("wirenboard-a1b2c3d4.local");
+    expect(onDelete).toHaveBeenCalledWith("A1B2C3D4");
   });
 
   it("закрывает открытое меню по клику в пустое место списка", () => {
@@ -175,19 +147,10 @@ describe("renderDeviceList", () => {
     container.append(list, emptySpace);
     document.body.append(container);
 
-    renderDeviceList(
-      list,
-      [
-        {
-          hostname: "wirenboard-a1b2c3d4.local",
-          serial: "A1B2C3D4"
-        }
-      ],
-      {
-        deleteText: "Удалить",
-        menuLabel: "Ещё"
-      }
-    );
+    renderDeviceList(list, [remoteDevice("A1B2C3D4", 157)], {
+      deleteText: "Удалить",
+      menuLabel: "Ещё"
+    });
 
     const menuAction = list.querySelector(".device-menu-action");
     const menu = list.querySelector(".device-menu");
@@ -203,23 +166,10 @@ describe("renderDeviceList", () => {
   it("держит открытым только одно overflow-меню одновременно", () => {
     const list = document.createElement("ul");
 
-    renderDeviceList(
-      list,
-      [
-        {
-          hostname: "wirenboard-b1b2c3d4.local",
-          serial: "B1B2C3D4"
-        },
-        {
-          hostname: "wirenboard-a1b2c3d4.local",
-          serial: "A1B2C3D4"
-        }
-      ],
-      {
-        deleteText: "Удалить",
-        menuLabel: "Ещё"
-      }
-    );
+    renderDeviceList(list, [remoteDevice("B1B2C3D4", 11), remoteDevice("A1B2C3D4", 12)], {
+      deleteText: "Удалить",
+      menuLabel: "Ещё"
+    });
 
     const menuActions = [...list.querySelectorAll(".device-menu-action")];
     const menus = [...list.querySelectorAll(".device-menu")];

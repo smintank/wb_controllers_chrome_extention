@@ -28,17 +28,12 @@ export function applyDeviceStatus(row, state, onlineOnly) {
   row.style.display = "";
 }
 
-export async function refreshDeviceStatuses({
-  devices,
-  findRowByHostname,
-  onlineOnly,
-  checkOnline
-}) {
+export async function refreshDeviceStatuses({ devices, findRow, onlineOnly, checkOnline }) {
   const updates = devices.map(async (device) => {
-    const row = findRowByHostname(device.hostname);
+    const row = findRow(device);
     if (!row) return;
 
-    const isOnline = await checkOnline(device.hostname);
+    const isOnline = await checkOnline(device);
     applyDeviceStatus(row, isOnline ? "online" : "offline", onlineOnly);
   });
 

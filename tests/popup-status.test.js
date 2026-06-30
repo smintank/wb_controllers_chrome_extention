@@ -4,10 +4,10 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { applyDeviceStatus, refreshDeviceStatuses } from "../src/popup-status.js";
 
-function createRow(hostname) {
+function createRow(serial) {
   const row = document.createElement("li");
   row.className = "device-row status-checking";
-  row.dataset.hostname = hostname;
+  row.dataset.serial = serial;
 
   const dot = document.createElement("span");
   dot.className = "status status-gray";
@@ -20,7 +20,7 @@ describe("applyDeviceStatus", () => {
   let row;
 
   beforeEach(() => {
-    row = createRow("wirenboard-ab12cd34.local");
+    row = createRow("AB12CD34");
   });
 
   it("держит строку в состоянии checking до результата проверки", () => {
@@ -56,23 +56,24 @@ describe("applyDeviceStatus", () => {
 
 describe("refreshDeviceStatuses", () => {
   it("обновляет строки асинхронно по мере прихода результатов, не дожидаясь всех проверок", async () => {
-    const firstRow = createRow("wirenboard-ab12cd34.local");
-    const secondRow = createRow("wirenboard-ef56gh78.local");
+    const firstRow = createRow("AB12CD34");
+    const secondRow = createRow("EF56GH78");
+    const rowsBySerial = { AB12CD34: firstRow, EF56GH78: secondRow };
     const resolutions = [];
     const visibleRows = () => [firstRow, secondRow].filter((row) => row.style.display !== "none");
 
     const refreshPromise = refreshDeviceStatuses({
       devices: [
-        { hostname: "wirenboard-ab12cd34.local" },
-        { hostname: "wirenboard-ef56gh78.local" }
+        { serial: "AB12CD34", origin: "http://wirenboard-ab12cd34.local" },
+        { serial: "EF56GH78", origin: "http://wirenboard-ef56gh78.local" }
       ],
-      findRowByHostname(hostname) {
-        return hostname === "wirenboard-ab12cd34.local" ? firstRow : secondRow;
+      findRow(device) {
+        return rowsBySerial[device.serial];
       },
       onlineOnly: true,
-      checkOnline(hostname) {
+      checkOnline(device) {
         return new Promise((resolve) => {
-          resolutions.push({ hostname, resolve });
+          resolutions.push({ serial: device.serial, resolve });
         });
       }
     });
@@ -81,7 +82,7 @@ describe("refreshDeviceStatuses", () => {
     expect(secondRow.classList.contains("status-checking")).toBe(true);
     expect(visibleRows()).toHaveLength(2);
 
-    resolutions.find(({ hostname }) => hostname === "wirenboard-ef56gh78.local")?.resolve(false);
+    resolutions.find(({ serial }) => serial === "EF56GH78")?.resolve(false);
     await Promise.resolve();
 
     expect(secondRow.classList.contains("status-offline")).toBe(true);
@@ -89,7 +90,7 @@ describe("refreshDeviceStatuses", () => {
     expect(firstRow.classList.contains("status-checking")).toBe(true);
     expect(visibleRows()).toHaveLength(1);
 
-    resolutions.find(({ hostname }) => hostname === "wirenboard-ab12cd34.local")?.resolve(true);
+    resolutions.find(({ serial }) => serial === "AB12CD34")?.resolve(true);
     await refreshPromise;
 
     expect(firstRow.classList.contains("status-online")).toBe(true);

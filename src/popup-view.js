@@ -50,17 +50,17 @@ export function renderDeviceList(list, devices, options = {}) {
     const deleteAction = document.createElement("button");
 
     row.className = "device-row";
-    row.dataset.hostname = device.hostname;
+    row.dataset.serial = device.serial;
     row.classList.add("status-checking");
     status.className = "status status-gray";
     primary.className = "device-primary";
-    primary.href = `http://${device.hostname}/`;
+    primary.href = `${device.origin}/`;
     primary.target = "_blank";
     primary.rel = "noopener noreferrer";
     label.className = "device-name";
     label.textContent = device.serial;
     sshAction.className = "device-ssh-action";
-    sshAction.href = `ssh://root@${device.hostname}`;
+    sshAction.href = `ssh://root@${device.sshHost}`;
     sshAction.target = "_blank";
     sshAction.rel = "noopener noreferrer";
     sshIcon.src = "assets/ssh.svg";
@@ -93,7 +93,7 @@ export function renderDeviceList(list, devices, options = {}) {
       event.stopPropagation();
       hideOpenMenu();
       if (typeof onDelete === "function") {
-        onDelete(device.hostname);
+        onDelete(device.serial);
       }
     });
 
